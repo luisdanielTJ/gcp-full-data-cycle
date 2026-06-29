@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+service-account-key.json
+data/
+.git/
+tests/
+docs/
+*.md
