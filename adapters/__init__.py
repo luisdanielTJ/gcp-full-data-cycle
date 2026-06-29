@@ -1,14 +1,14 @@
 from adapters.config import (
-    WAREHOUSE_MODE,
-    LLM_MODE,
-    GEMINI_API_KEY,
-    OPENAI_API_KEY,
     DUCKDB_PATH,
     GCP_PROJECT_ID,
+    GEMINI_API_KEY,
+    LLM_MODE,
+    OPENAI_API_KEY,
+    WAREHOUSE_MODE,
 )
-from adapters.warehouse import WarehouseAdapter, DuckDBWarehouse, BigQueryWarehouse
-from adapters.llm import LLMAdapter, GeminiAdapter, OpenAIAdapter
-from adapters.model_registry import ModelRegistryAdapter, InMemoryModelRegistry
+from adapters.llm import GeminiAdapter, LLMAdapter, OpenAIAdapter
+from adapters.model_registry import InMemoryModelRegistry, ModelRegistryAdapter
+from adapters.warehouse import BigQueryWarehouse, DuckDBWarehouse, WarehouseAdapter
 
 
 def get_warehouse() -> WarehouseAdapter:

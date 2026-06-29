@@ -22,7 +22,8 @@ class GeminiAdapter(LLMAdapter):
 
     def score_sentiment(self, text: str) -> dict:
         prompt = (
-            "Analyze the sentiment of this crypto-related text toward Bitcoin/Ethereum price direction.\n\n"
+            "Analyze the sentiment of this crypto-related text toward Bitcoin/Ethereum price "
+            "direction.\n\n"
             f"Text: {text}\n\n"
             "Respond with ONLY valid JSON in this exact format:\n"
             '{"sentiment": -1, "confidence": 0.8, "reason": "one sentence explanation"}\n\n'
@@ -36,7 +37,8 @@ class GeminiAdapter(LLMAdapter):
         features = "\n".join(f"- {f}" for f in context["top_features"])
         prices = ", ".join(str(p) for p in context["recent_prices"])
         prompt = (
-            "You are a crypto trading assistant. Explain this trading signal in 3-4 plain English sentences.\n\n"
+            "You are a crypto trading assistant. Explain this trading signal in 3-4 plain "
+            "English sentences.\n\n"
             f"Signal: {context['signal']} for {context['asset']}\n"
             f"Confidence: {context['confidence']:.0%}\n"
             f"Top factors:\n{features}\n"
@@ -56,7 +58,8 @@ class OpenAIAdapter(LLMAdapter):
 
     def score_sentiment(self, text: str) -> dict:
         prompt = (
-            "Analyze the sentiment of this crypto-related text toward Bitcoin/Ethereum price direction.\n\n"
+            "Analyze the sentiment of this crypto-related text toward Bitcoin/Ethereum price "
+            "direction.\n\n"
             f"Text: {text}\n\n"
             "Respond with ONLY valid JSON in this exact format:\n"
             '{"sentiment": -1, "confidence": 0.8, "reason": "one sentence explanation"}\n\n'
@@ -73,7 +76,8 @@ class OpenAIAdapter(LLMAdapter):
         features = "\n".join(f"- {f}" for f in context["top_features"])
         prices = ", ".join(str(p) for p in context["recent_prices"])
         prompt = (
-            "You are a crypto trading assistant. Explain this trading signal in 3-4 plain English sentences.\n\n"
+            "You are a crypto trading assistant. Explain this trading signal in 3-4 plain "
+            "English sentences.\n\n"
             f"Signal: {context['signal']} for {context['asset']}\n"
             f"Confidence: {context['confidence']:.0%}\n"
             f"Top factors:\n{features}\n"

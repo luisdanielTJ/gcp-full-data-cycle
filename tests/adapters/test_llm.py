@@ -1,5 +1,7 @@
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
+
 from adapters.llm import GeminiAdapter, OpenAIAdapter
 
 
@@ -57,7 +59,8 @@ def test_score_sentiment_validates_range(mock_gemini):
 
 def test_narrate_signal_returns_non_empty_string(mock_gemini):
     mock_gemini.client.models.generate_content.return_value = MagicMock(
-        text="BTC shows a BUY signal at 71% confidence driven by MACD crossover and positive sentiment."
+        text="BTC shows a BUY signal at 71% confidence driven by MACD crossover and positive "
+        "sentiment."
     )
     context = {
         "signal": "BUY",

@@ -1,6 +1,7 @@
 """Run once after GCP console setup to verify all connections work."""
 import os
 import sys
+
 from dotenv import load_dotenv
 
 load_dotenv()

@@ -1,4 +1,5 @@
 import pytest
+
 from adapters.model_registry import InMemoryModelRegistry
 
 
