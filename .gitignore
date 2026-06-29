@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.env
+*.egg-info/
+.venv/
+dist/
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+data/*.duckdb
+service-account-key.json
+*.json
