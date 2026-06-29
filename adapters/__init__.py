@@ -1,6 +1,13 @@
-from adapters.config import WAREHOUSE_MODE, LLM_MODE, GEMINI_API_KEY, DUCKDB_PATH, GCP_PROJECT_ID
+from adapters.config import (
+    WAREHOUSE_MODE,
+    LLM_MODE,
+    GEMINI_API_KEY,
+    OPENAI_API_KEY,
+    DUCKDB_PATH,
+    GCP_PROJECT_ID,
+)
 from adapters.warehouse import WarehouseAdapter, DuckDBWarehouse, BigQueryWarehouse
-from adapters.llm import LLMAdapter, GeminiAdapter
+from adapters.llm import LLMAdapter, GeminiAdapter, OpenAIAdapter
 from adapters.model_registry import ModelRegistryAdapter, InMemoryModelRegistry
 
 
@@ -13,7 +20,9 @@ def get_warehouse() -> WarehouseAdapter:
 def get_llm() -> LLMAdapter:
     if LLM_MODE == "gemini":
         return GeminiAdapter(api_key=GEMINI_API_KEY)
-    raise ValueError(f"Unknown LLM_MODE: {LLM_MODE!r}. Set LLM_MODE=gemini in .env")
+    if LLM_MODE == "openai":
+        return OpenAIAdapter(api_key=OPENAI_API_KEY)
+    raise ValueError(f"Unknown LLM_MODE: {LLM_MODE!r}. Set LLM_MODE=gemini or openai in .env")
 
 
 def get_model_registry() -> ModelRegistryAdapter:
