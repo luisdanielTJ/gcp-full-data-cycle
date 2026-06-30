@@ -40,7 +40,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["adapters", "ingestion", "silver"]
+packages = ["adapters", "ingestion", "silver", "gold"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

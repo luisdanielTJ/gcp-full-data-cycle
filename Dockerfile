@@ -11,6 +11,7 @@ RUN uv sync --frozen --no-dev
 COPY adapters/ adapters/
 COPY ingestion/ ingestion/
 COPY silver/ silver/
+COPY gold/ gold/
 COPY pipeline.py ./
 
 ENV PYTHONPATH=/app
