@@ -7,7 +7,7 @@ from adapters.config import (
     WAREHOUSE_MODE,
 )
 from adapters.llm import GeminiAdapter, LLMAdapter, OpenAIAdapter
-from adapters.model_registry import InMemoryModelRegistry, ModelRegistryAdapter
+from adapters.model_registry import ModelRegistryAdapter, WarehouseModelRegistry
 from adapters.warehouse import BigQueryWarehouse, DuckDBWarehouse, WarehouseAdapter
 
 
@@ -26,4 +26,4 @@ def get_llm() -> LLMAdapter:
 
 
 def get_model_registry() -> ModelRegistryAdapter:
-    return InMemoryModelRegistry()
+    return WarehouseModelRegistry(get_warehouse())
