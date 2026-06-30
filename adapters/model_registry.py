@@ -20,6 +20,11 @@ class ModelRegistryAdapter(ABC):
     def promote_model(self, name: str, version: str) -> None:
         ...
 
+    @abstractmethod
+    def get_production_version(self, name: str) -> str | None:
+        """Returns the currently promoted version, or None if unpromoted."""
+        ...
+
 
 class InMemoryModelRegistry(ModelRegistryAdapter):
     """Local stub for testing. Vertex AI implementation added in Plan 3."""
@@ -47,6 +52,9 @@ class InMemoryModelRegistry(ModelRegistryAdapter):
 
     def promote_model(self, name: str, version: str) -> None:
         self._production[name] = version
+
+    def get_production_version(self, name: str) -> str | None:
+        return self._production.get(name)
 
 
 class WarehouseModelRegistry(ModelRegistryAdapter):
@@ -91,3 +99,11 @@ class WarehouseModelRegistry(ModelRegistryAdapter):
             "promoted_at": pd.Timestamp.now(tz="UTC"),
         }])
         self.warehouse.write_table(row, "models", "promotions", mode="append")
+
+    def get_production_version(self, name: str) -> str | None:
+        promotions_df = self.warehouse.read_table("models", "promotions")
+        if not promotions_df.empty:
+            promotions_df = promotions_df[promotions_df["name"] == name]
+        if promotions_df.empty:
+            return None
+        return promotions_df.sort_values("promoted_at").iloc[-1]["version"]

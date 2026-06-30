@@ -48,6 +48,17 @@ def test_versions_increment(registry):
     assert registry.load_model("btc_signal", version=v2) == {"v": 2}
 
 
+def test_get_production_version_returns_promoted_version(registry):
+    version = registry.log_model(model={"v": 1}, metrics={}, params={}, name="btc_signal")
+    registry.promote_model("btc_signal", version)
+
+    assert registry.get_production_version("btc_signal") == version
+
+
+def test_get_production_version_returns_none_when_unpromoted(registry):
+    assert registry.get_production_version("btc_signal") is None
+
+
 @pytest.fixture
 def warehouse_registry():
     warehouse = DuckDBWarehouse(db_path=":memory:")
@@ -91,3 +102,14 @@ def test_warehouse_versions_increment(warehouse_registry):
     assert v1 != v2
     assert warehouse_registry.load_model("btc_signal", version=v1) == {"v": 1}
     assert warehouse_registry.load_model("btc_signal", version=v2) == {"v": 2}
+
+
+def test_warehouse_get_production_version_returns_promoted_version(warehouse_registry):
+    version = warehouse_registry.log_model(model={"v": 1}, metrics={}, params={}, name="btc_signal")
+    warehouse_registry.promote_model("btc_signal", version)
+
+    assert warehouse_registry.get_production_version("btc_signal") == version
+
+
+def test_warehouse_get_production_version_returns_none_when_unpromoted(warehouse_registry):
+    assert warehouse_registry.get_production_version("btc_signal") is None
