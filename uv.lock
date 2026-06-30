@@ -430,6 +430,7 @@ name = "crypto-edge"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "duckdb" },
     { name = "fastapi" },
     { name = "google-cloud-bigquery", extra = ["pandas"] },
     { name = "google-cloud-storage" },
@@ -464,6 +465,7 @@ ml = [
 
 [package.metadata]
 requires-dist = [
+    { name = "duckdb", specifier = ">=1.1.0" },
     { name = "duckdb", marker = "extra == 'local'", specifier = ">=1.1.0" },
     { name = "fastapi", specifier = ">=0.115.0" },
     { name = "google-cloud-aiplatform", marker = "extra == 'ml'", specifier = ">=1.71.0" },

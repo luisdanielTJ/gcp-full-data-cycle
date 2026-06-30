@@ -9,7 +9,8 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev
 
 COPY adapters/ adapters/
+COPY ingestion/ ingestion/
 
 ENV PYTHONPATH=/app
 
-CMD ["uv", "run", "python", "-c", "print('crypto-edge foundation ready')"]
+CMD ["uv", "run", "python", "-m", "ingestion.run"]
