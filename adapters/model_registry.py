@@ -1,5 +1,9 @@
+import json
+import pickle
 from abc import ABC, abstractmethod
 from typing import Any
+
+import pandas as pd
 
 
 class ModelRegistryAdapter(ABC):
@@ -43,3 +47,47 @@ class InMemoryModelRegistry(ModelRegistryAdapter):
 
     def promote_model(self, name: str, version: str) -> None:
         self._production[name] = version
+
+
+class WarehouseModelRegistry(ModelRegistryAdapter):
+    """Stores models in warehouse tables (models.registry, models.promotions)."""
+
+    def __init__(self, warehouse) -> None:
+        self.warehouse = warehouse
+
+    def log_model(self, model: Any, metrics: dict, params: dict, name: str) -> str:
+        registry_df = self.warehouse.read_table("models", "registry")
+        existing_count = 0 if registry_df.empty else len(registry_df[registry_df["name"] == name])
+        version = str(existing_count + 1)
+
+        row = pd.DataFrame([{
+            "name": name,
+            "version": version,
+            "model_bytes": pickle.dumps(model),
+            "metrics_json": json.dumps(metrics),
+            "params_json": json.dumps(params),
+            "created_at": pd.Timestamp.now(tz="UTC"),
+        }])
+        self.warehouse.write_table(row, "models", "registry", mode="append")
+        return version
+
+    def load_model(self, name: str, version: str = "production") -> Any:
+        if version == "production":
+            promotions_df = self.warehouse.read_table("models", "promotions")
+            if not promotions_df.empty:
+                promotions_df = promotions_df[promotions_df["name"] == name]
+            if promotions_df.empty:
+                raise ValueError(f"No production model for '{name}'")
+            version = promotions_df.sort_values("promoted_at").iloc[-1]["version"]
+
+        registry_df = self.warehouse.read_table("models", "registry")
+        match = registry_df[(registry_df["name"] == name) & (registry_df["version"] == version)]
+        return pickle.loads(match.iloc[0]["model_bytes"])
+
+    def promote_model(self, name: str, version: str) -> None:
+        row = pd.DataFrame([{
+            "name": name,
+            "version": version,
+            "promoted_at": pd.Timestamp.now(tz="UTC"),
+        }])
+        self.warehouse.write_table(row, "models", "promotions", mode="append")
