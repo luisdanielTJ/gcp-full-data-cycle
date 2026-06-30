@@ -54,3 +54,19 @@ def test_invalid_mode_raises(warehouse):
                         "ts": [pd.Timestamp("2024-01-01", tz="UTC")]})
     with pytest.raises(ValueError, match="mode must be"):
         warehouse.write_table(df, "bronze", "raw_prices", mode="invalid")
+
+
+def test_read_table_returns_written_data(warehouse):
+    df = pd.DataFrame({
+        "asset": ["BTC"], "close": [50000.0],
+        "ts": [pd.Timestamp("2024-01-01", tz="UTC")],
+    })
+    warehouse.write_table(df, "bronze", "raw_prices", mode="replace")
+    result = warehouse.read_table("bronze", "raw_prices")
+    assert len(result) == 1
+    assert result["asset"].iloc[0] == "BTC"
+
+
+def test_read_table_returns_empty_when_table_missing(warehouse):
+    result = warehouse.read_table("silver", "does_not_exist")
+    assert result.empty

@@ -14,6 +14,11 @@ class WarehouseAdapter(ABC):
     ) -> None:
         ...
 
+    @abstractmethod
+    def read_table(self, dataset: str, table: str) -> pd.DataFrame:
+        """Returns the full table contents, or an empty DataFrame if it doesn't exist yet."""
+        ...
+
 
 class DuckDBWarehouse(WarehouseAdapter):
     def __init__(self, db_path: str = ":memory:"):
@@ -37,6 +42,13 @@ class DuckDBWarehouse(WarehouseAdapter):
                 self.conn.execute(f"INSERT INTO {table_name} SELECT * FROM df")
             else:
                 self.conn.execute(f"CREATE TABLE {table_name} AS SELECT * FROM df")
+
+    def read_table(self, dataset: str, table: str) -> pd.DataFrame:
+        table_name = f"{dataset}__{table}"
+        existing = self.conn.execute("SHOW TABLES").fetchdf()
+        if table_name not in existing["name"].values:
+            return pd.DataFrame()
+        return self.conn.execute(f"SELECT * FROM {table_name}").df()
 
 
 class BigQueryWarehouse(WarehouseAdapter):
@@ -62,3 +74,12 @@ class BigQueryWarehouse(WarehouseAdapter):
         job_config = bigquery.LoadJobConfig(write_disposition=disposition)
         table_ref = f"{self.project_id}.{dataset}.{table}"
         self.client.load_table_from_dataframe(df, table_ref, job_config=job_config).result()
+
+    def read_table(self, dataset: str, table: str) -> pd.DataFrame:
+        from google.api_core.exceptions import NotFound
+
+        table_ref = f"{self.project_id}.{dataset}.{table}"
+        try:
+            return self.client.query(f"SELECT * FROM `{table_ref}`").to_dataframe()
+        except NotFound:
+            return pd.DataFrame()
