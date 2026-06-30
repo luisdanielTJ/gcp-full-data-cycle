@@ -3,7 +3,6 @@ services:
     name: crypto-edge
     runtime: docker
     dockerfilePath: Dockerfile.app
-    plan: free
     port: 8501
     envVars:
       - key: WAREHOUSE_MODE
