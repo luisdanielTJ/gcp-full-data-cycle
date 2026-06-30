@@ -1,19 +1,19 @@
 from adapters import get_warehouse
 from adapters.config import REDDIT_USER_AGENT
-from ingestion.binance import BinanceClient
 from ingestion.crypto_news import CryptoNewsClient
+from ingestion.kraken import KrakenClient
 from ingestion.reddit import RedditClient
 
-ASSETS = ["BTCUSDT", "ETHUSDT"]
+ASSETS = ["XBTUSD", "ETHUSD"]
 SUBREDDITS = ["Bitcoin", "ethereum", "CryptoCurrency"]
 
 
-def ingest_binance(warehouse) -> None:
-    client = BinanceClient()
-    for asset in ASSETS:
-        df = client.fetch_ohlcv(asset)
-        warehouse.write_table(df, "bronze", "binance_ohlcv", mode="append")
-        print(f"[binance] wrote {len(df)} row(s) for {asset}")
+def ingest_ohlcv(warehouse) -> None:
+    client = KrakenClient()
+    for pair in ASSETS:
+        df = client.fetch_ohlcv(pair)
+        warehouse.write_table(df, "bronze", "ohlcv", mode="append")
+        print(f"[kraken] wrote {len(df)} row(s) for {pair}")
 
 
 def ingest_reddit(warehouse) -> None:
@@ -31,7 +31,7 @@ def ingest_news(warehouse) -> None:
 
 
 def run_ingestion_cycle(warehouse) -> None:
-    ingest_binance(warehouse)
+    ingest_ohlcv(warehouse)
     ingest_reddit(warehouse)
     ingest_news(warehouse)
 
