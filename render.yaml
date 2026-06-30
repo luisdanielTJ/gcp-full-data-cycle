@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: crypto-edge
+    runtime: docker
+    dockerfilePath: Dockerfile.app
+    plan: free
+    port: 8501
+    envVars:
+      - key: WAREHOUSE_MODE
+        value: bigquery
+      - key: GCP_PROJECT_ID
+        sync: false
+      - key: GOOGLE_APPLICATION_CREDENTIALS_JSON
+        sync: false
