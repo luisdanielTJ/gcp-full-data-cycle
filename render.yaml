@@ -1,7 +1,7 @@
 services:
   - type: web
     name: crypto-edge
-    runtime: docker
+    env: docker
     dockerfilePath: Dockerfile.app
     port: 8501
     envVars:
