@@ -1,12 +1,11 @@
 from adapters import get_warehouse
-from adapters.config import CRYPTOPANIC_API_KEY, REDDIT_USER_AGENT
+from adapters.config import REDDIT_USER_AGENT
 from ingestion.binance import BinanceClient
-from ingestion.cryptopanic import CryptoPanicClient
+from ingestion.crypto_news import CryptoNewsClient
 from ingestion.reddit import RedditClient
 
 ASSETS = ["BTCUSDT", "ETHUSDT"]
 SUBREDDITS = ["Bitcoin", "ethereum", "CryptoCurrency"]
-CURRENCIES = ["BTC", "ETH"]
 
 
 def ingest_binance(warehouse) -> None:
@@ -24,17 +23,17 @@ def ingest_reddit(warehouse) -> None:
     print(f"[reddit] wrote {len(df)} row(s)")
 
 
-def ingest_cryptopanic(warehouse) -> None:
-    client = CryptoPanicClient(api_key=CRYPTOPANIC_API_KEY)
-    df = client.fetch_news(currencies=CURRENCIES)
-    warehouse.write_table(df, "bronze", "cryptopanic_news", mode="append")
-    print(f"[cryptopanic] wrote {len(df)} row(s)")
+def ingest_news(warehouse) -> None:
+    client = CryptoNewsClient()
+    df = client.fetch_news()
+    warehouse.write_table(df, "bronze", "crypto_news", mode="append")
+    print(f"[news] wrote {len(df)} row(s)")
 
 
 def run_ingestion_cycle(warehouse) -> None:
     ingest_binance(warehouse)
     ingest_reddit(warehouse)
-    ingest_cryptopanic(warehouse)
+    ingest_news(warehouse)
 
 
 if __name__ == "__main__":

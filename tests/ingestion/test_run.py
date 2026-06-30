@@ -39,19 +39,19 @@ def test_ingest_reddit_writes_to_bronze():
     )
 
 
-def test_ingest_cryptopanic_writes_to_bronze():
+def test_ingest_news_writes_to_bronze():
     fake_df = pd.DataFrame({"title": ["BTC ATH"]})
     mock_warehouse = MagicMock()
-    with patch("ingestion.run.CryptoPanicClient") as mock_cls:
+    with patch("ingestion.run.CryptoNewsClient") as mock_cls:
         mock_client = MagicMock()
         mock_client.fetch_news.return_value = fake_df
         mock_cls.return_value = mock_client
 
-        run.ingest_cryptopanic(mock_warehouse)
+        run.ingest_news(mock_warehouse)
 
-    mock_client.fetch_news.assert_called_once_with(currencies=run.CURRENCIES)
+    mock_client.fetch_news.assert_called_once()
     mock_warehouse.write_table.assert_called_once_with(
-        fake_df, "bronze", "cryptopanic_news", mode="append"
+        fake_df, "bronze", "crypto_news", mode="append"
     )
 
 
@@ -60,10 +60,10 @@ def test_run_ingestion_cycle_calls_all_three_ingesters():
     with (
         patch("ingestion.run.ingest_binance") as mock_bin,
         patch("ingestion.run.ingest_reddit") as mock_red,
-        patch("ingestion.run.ingest_cryptopanic") as mock_cp,
+        patch("ingestion.run.ingest_news") as mock_news,
     ):
         run.run_ingestion_cycle(mock_warehouse)
 
     mock_bin.assert_called_once_with(mock_warehouse)
     mock_red.assert_called_once_with(mock_warehouse)
-    mock_cp.assert_called_once_with(mock_warehouse)
+    mock_news.assert_called_once_with(mock_warehouse)
