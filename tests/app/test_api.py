@@ -147,9 +147,11 @@ def test_get_signal_history_returns_all_rows_for_asset():
     mock_warehouse = MagicMock()
     signals_df = pd.DataFrame([
         {"asset": "XBTUSD", "signal": "BUY", "confidence": 0.8,
-         "predicted_at": pd.Timestamp("2026-06-01T00:00Z"), "model_version": "1", "shap_top5": "[]"},
+         "predicted_at": pd.Timestamp("2026-06-01T00:00Z"),
+         "model_version": "1", "shap_top5": "[]"},
         {"asset": "ETHUSD", "signal": "SELL", "confidence": 0.7,
-         "predicted_at": pd.Timestamp("2026-06-01T00:00Z"), "model_version": "1", "shap_top5": "[]"},
+         "predicted_at": pd.Timestamp("2026-06-01T00:00Z"),
+         "model_version": "1", "shap_top5": "[]"},
     ])
     mock_warehouse.read_table.return_value = signals_df
 
@@ -175,7 +177,9 @@ def test_get_sentiment_combines_reddit_and_news():
         "published_at": pd.Timestamp("2026-06-01T01:00Z"), "sentiment": -1, "confidence": 0.8,
     }])
     mock_warehouse.read_table.side_effect = lambda dataset, table: (
-        reddit_df if table == "reddit_posts" else news_df if table == "crypto_news" else pd.DataFrame()
+        reddit_df if table == "reddit_posts"
+        else news_df if table == "crypto_news"
+        else pd.DataFrame()
     )
 
     with patch("app.api.warehouse", mock_warehouse):

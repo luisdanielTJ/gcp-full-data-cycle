@@ -3,7 +3,9 @@ import pandas as pd
 _DIRECTION_TO_SIGNAL = {"LONG": "BUY", "SHORT": "SELL"}
 
 
-def unrealized_pnl(direction: str, entry_price: float, current_price: float, amount_usd: float) -> float:
+def unrealized_pnl(
+    direction: str, entry_price: float, current_price: float, amount_usd: float
+) -> float:
     pct_change = (current_price - entry_price) / entry_price
     if direction == "SHORT":
         pct_change = -pct_change
@@ -14,7 +16,9 @@ def realized_pnl(direction: str, entry_price: float, exit_price: float, amount_u
     return unrealized_pnl(direction, entry_price, exit_price, amount_usd)
 
 
-def match_signal_for_trade(signals_df: pd.DataFrame, asset: str, opened_at: pd.Timestamp) -> str | None:
+def match_signal_for_trade(
+    signals_df: pd.DataFrame, asset: str, opened_at: pd.Timestamp
+) -> str | None:
     candidates = signals_df[
         (signals_df["asset"] == asset) & (signals_df["predicted_at"] <= opened_at)
     ]

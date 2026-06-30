@@ -24,7 +24,9 @@ def enrich_open_positions(open_trades: pd.DataFrame, ohlcv_df: pd.DataFrame) -> 
         current_price = prices.get(row["asset"])
         if current_price is None:
             continue
-        upnl = unrealized_pnl(row["direction"], row["entry_price"], current_price, row["amount_usd"])
+        upnl = unrealized_pnl(
+            row["direction"], row["entry_price"], current_price, row["amount_usd"]
+        )
         rows.append({**row.to_dict(), "current_price": current_price, "unrealized_pnl": upnl})
 
     return pd.DataFrame(rows)

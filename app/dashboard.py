@@ -81,9 +81,10 @@ for asset in ASSETS:
         for signal_type, color in (("BUY", "green"), ("SELL", "red")):
             points = merged[merged["signal"] == signal_type]
             if not points.empty:
+                symbol = "triangle-up" if signal_type == "BUY" else "triangle-down"
                 fig.add_trace(go.Scatter(
                     x=points["open_time"], y=points["close"], mode="markers",
-                    marker=dict(color=color, size=10, symbol="triangle-up" if signal_type == "BUY" else "triangle-down"),
+                    marker=dict(color=color, size=10, symbol=symbol),
                     name=signal_type,
                 ))
 
@@ -101,7 +102,9 @@ for asset in ASSETS:
     st.subheader(ASSET_LABELS[asset])
     bar_df = pd.DataFrame(top5)
     colors = ["green" if v > 0 else "red" for v in bar_df["value"]]
-    fig = go.Figure(go.Bar(x=bar_df["value"], y=bar_df["feature"], orientation="h", marker_color=colors))
+    fig = go.Figure(go.Bar(
+        x=bar_df["value"], y=bar_df["feature"], orientation="h", marker_color=colors,
+    ))
     st.plotly_chart(fig, use_container_width=True)
 
 st.header("Sentiment Feed")
@@ -118,7 +121,8 @@ with st.form("log_trade"):
     direction = st.selectbox("Direction", ["LONG", "SHORT"])
     entry_price = st.number_input("Entry price", min_value=0.0)
     amount_usd = st.number_input("Amount (USD)", min_value=0.0)
-    opened_at = st.text_input("Opened at (ISO timestamp)", value=datetime.now(timezone.utc).isoformat())
+    default_opened_at = datetime.now(timezone.utc).isoformat()
+    opened_at = st.text_input("Opened at (ISO timestamp)", value=default_opened_at)
     submitted = st.form_submit_button("Log trade")
     if submitted:
         client.post("/trades", json={
@@ -156,7 +160,9 @@ if performance:
     perf_cols[0].metric("Total P&L", f"${performance['total_pnl']:.2f}")
     win_rate = performance["win_rate"]
     perf_cols[1].metric("Win rate", f"{win_rate:.0%}" if win_rate is not None else "N/A")
-    perf_cols[2].metric("Best trade", f"${performance['best_trade_pnl']:.2f}" if performance['best_trade_pnl'] is not None else "N/A")
-    perf_cols[3].metric("Worst trade", f"${performance['worst_trade_pnl']:.2f}" if performance['worst_trade_pnl'] is not None else "N/A")
+    best = performance["best_trade_pnl"]
+    worst = performance["worst_trade_pnl"]
+    perf_cols[2].metric("Best trade", f"${best:.2f}" if best is not None else "N/A")
+    perf_cols[3].metric("Worst trade", f"${worst:.2f}" if worst is not None else "N/A")
     sig_acc = performance["signal_accuracy"]
     perf_cols[4].metric("Signal accuracy", f"{sig_acc:.0%}" if sig_acc is not None else "N/A")

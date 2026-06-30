@@ -5,22 +5,30 @@ from app.pnl import match_signal_for_trade, summarize_performance, unrealized_pn
 
 
 def test_unrealized_pnl_long_position_gain():
-    pnl = unrealized_pnl(direction="LONG", entry_price=100.0, current_price=110.0, amount_usd=1000.0)
+    pnl = unrealized_pnl(
+        direction="LONG", entry_price=100.0, current_price=110.0, amount_usd=1000.0
+    )
     assert pnl == 100.0
 
 
 def test_unrealized_pnl_long_position_loss():
-    pnl = unrealized_pnl(direction="LONG", entry_price=100.0, current_price=90.0, amount_usd=1000.0)
+    pnl = unrealized_pnl(
+        direction="LONG", entry_price=100.0, current_price=90.0, amount_usd=1000.0
+    )
     assert pnl == -100.0
 
 
 def test_unrealized_pnl_short_position_gain():
-    pnl = unrealized_pnl(direction="SHORT", entry_price=100.0, current_price=90.0, amount_usd=1000.0)
+    pnl = unrealized_pnl(
+        direction="SHORT", entry_price=100.0, current_price=90.0, amount_usd=1000.0
+    )
     assert pnl == 100.0
 
 
 def test_unrealized_pnl_short_position_loss():
-    pnl = unrealized_pnl(direction="SHORT", entry_price=100.0, current_price=110.0, amount_usd=1000.0)
+    pnl = unrealized_pnl(
+        direction="SHORT", entry_price=100.0, current_price=110.0, amount_usd=1000.0
+    )
     assert pnl == -100.0
 
 
