@@ -92,6 +92,78 @@ def test_patch_close_trade_returns_404_when_trade_not_found():
     assert response.status_code == 404
 
 
+def test_get_positions_returns_enriched_open_trades():
+    mock_warehouse = MagicMock()
+    journal_df = pd.DataFrame([{
+        "id": "t1", "asset": "XBTUSD", "direction": "LONG", "entry_price": 50000.0,
+        "amount_usd": 1000.0, "opened_at": pd.Timestamp("2026-06-01T00:00Z"),
+        "closed_at": pd.NaT, "exit_price": float("nan"),
+    }])
+    ohlcv_df = pd.DataFrame([{
+        "asset": "XBTUSD", "open_time": pd.Timestamp("2026-06-01T04:00Z"), "close": 51000.0,
+    }])
+    mock_warehouse.read_table.side_effect = lambda dataset, table: (
+        journal_df if table == "journal" else ohlcv_df if table == "ohlcv" else pd.DataFrame()
+    )
+
+    with patch("app.api.warehouse", mock_warehouse):
+        from app.api import app
+        client = TestClient(app)
+        response = client.get("/positions")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert len(body) == 1
+    assert body[0]["unrealized_pnl"] == 20.0
+
+
+def test_get_performance_returns_summary_for_closed_trades():
+    mock_warehouse = MagicMock()
+    journal_df = pd.DataFrame([
+        {"id": "t1", "asset": "XBTUSD", "direction": "LONG", "entry_price": 100.0,
+         "exit_price": 110.0, "amount_usd": 1000.0,
+         "opened_at": pd.Timestamp("2026-06-01T00:00Z"),
+         "closed_at": pd.Timestamp("2026-06-01T04:00Z")},
+    ])
+    signals_df = pd.DataFrame([{
+        "asset": "XBTUSD", "signal": "BUY", "predicted_at": pd.Timestamp("2026-05-31T00:00Z"),
+    }])
+    mock_warehouse.read_table.side_effect = lambda dataset, table: (
+        journal_df if table == "journal" else signals_df if table == "signals" else pd.DataFrame()
+    )
+
+    with patch("app.api.warehouse", mock_warehouse):
+        from app.api import app
+        client = TestClient(app)
+        response = client.get("/performance")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["total_pnl"] == 100.0
+    assert body["win_rate"] == 1.0
+
+
+def test_get_signal_history_returns_all_rows_for_asset():
+    mock_warehouse = MagicMock()
+    signals_df = pd.DataFrame([
+        {"asset": "XBTUSD", "signal": "BUY", "confidence": 0.8,
+         "predicted_at": pd.Timestamp("2026-06-01T00:00Z"), "model_version": "1", "shap_top5": "[]"},
+        {"asset": "ETHUSD", "signal": "SELL", "confidence": 0.7,
+         "predicted_at": pd.Timestamp("2026-06-01T00:00Z"), "model_version": "1", "shap_top5": "[]"},
+    ])
+    mock_warehouse.read_table.return_value = signals_df
+
+    with patch("app.api.warehouse", mock_warehouse):
+        from app.api import app
+        client = TestClient(app)
+        response = client.get("/signals/XBTUSD/history")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert len(body) == 1
+    assert body[0]["signal"] == "BUY"
+
+
 def test_get_sentiment_combines_reddit_and_news():
     mock_warehouse = MagicMock()
     reddit_df = pd.DataFrame([{

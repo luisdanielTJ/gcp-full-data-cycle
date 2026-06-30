@@ -6,6 +6,8 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 from adapters import get_warehouse
+from app.pnl import match_signal_for_trade, summarize_performance
+from app.positions import enrich_open_positions
 
 app = FastAPI(title="crypto-edge API")
 warehouse = get_warehouse()
@@ -102,6 +104,43 @@ def post_trade(trade: TradeCreate):
     }])
     warehouse.write_table(row, "trades", "journal", mode="append")
     return _records(row)[0]
+
+
+@app.get("/positions")
+def get_positions():
+    journal_df = warehouse.read_table("trades", "journal")
+    if journal_df.empty or "closed_at" not in journal_df.columns:
+        return []
+    open_trades = journal_df[journal_df["closed_at"].isna()]
+    ohlcv_df = warehouse.read_table("silver", "ohlcv")
+    enriched = enrich_open_positions(open_trades.reset_index(drop=True), ohlcv_df)
+    return _records(enriched)
+
+
+@app.get("/performance")
+def get_performance():
+    journal_df = warehouse.read_table("trades", "journal")
+    if journal_df.empty or "closed_at" not in journal_df.columns:
+        return summarize_performance(pd.DataFrame())
+    closed = journal_df[journal_df["closed_at"].notna()].copy()
+    if closed.empty:
+        return summarize_performance(pd.DataFrame())
+    signals_df = warehouse.read_table("predictions", "signals")
+    closed["matched_signal"] = closed.apply(
+        lambda r: match_signal_for_trade(signals_df, r["asset"], r["opened_at"])
+        if not signals_df.empty else None,
+        axis=1,
+    )
+    return summarize_performance(closed)
+
+
+@app.get("/signals/{asset}/history")
+def get_signal_history(asset: str):
+    df = warehouse.read_table("predictions", "signals")
+    if df.empty or "asset" not in df.columns:
+        return []
+    df = df[df["asset"] == asset].sort_values("predicted_at")
+    return _records(df)
 
 
 @app.patch("/trades/{trade_id}/close")
