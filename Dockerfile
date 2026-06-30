@@ -10,7 +10,9 @@ RUN uv sync --frozen --no-dev
 
 COPY adapters/ adapters/
 COPY ingestion/ ingestion/
+COPY silver/ silver/
+COPY pipeline.py ./
 
 ENV PYTHONPATH=/app
 
-CMD ["uv", "run", "python", "-m", "ingestion.run"]
+CMD ["uv", "run", "python", "pipeline.py"]
