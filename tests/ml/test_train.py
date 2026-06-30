@@ -63,3 +63,18 @@ def test_train_model_excludes_non_feature_columns():
     assert "open_time" not in X_test.columns
     assert "computed_at" not in X_test.columns
     assert "rsi_14" in X_test.columns
+
+
+def test_feature_columns_excludes_non_feature_columns():
+    from ml.train import feature_columns
+
+    dataset = _synthetic_dataset(5)
+
+    cols = feature_columns(dataset)
+
+    assert "label" not in cols
+    assert "return_pct" not in cols
+    assert "asset" not in cols
+    assert "open_time" not in cols
+    assert "computed_at" not in cols
+    assert "rsi_14" in cols

@@ -2,7 +2,7 @@ import pandas as pd
 from xgboost import XGBClassifier
 
 _TEST_SPLIT_RATIO = 0.2
-_NON_FEATURE_COLS = ["asset", "open_time", "computed_at", "return_pct", "label"]
+NON_FEATURE_COLS = ["asset", "open_time", "computed_at", "return_pct", "label"]
 _XGB_PARAMS = {
     "n_estimators": 100,
     "max_depth": 4,
@@ -17,14 +17,14 @@ def time_based_split(dataset: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]
     return sorted_df.iloc[:split_index], sorted_df.iloc[split_index:]
 
 
-def _feature_columns(df: pd.DataFrame) -> list[str]:
-    return [c for c in df.columns if c not in _NON_FEATURE_COLS]
+def feature_columns(df: pd.DataFrame) -> list[str]:
+    return [c for c in df.columns if c not in NON_FEATURE_COLS]
 
 
 def train_model(
     train_df: pd.DataFrame, test_df: pd.DataFrame
 ) -> tuple[XGBClassifier, pd.DataFrame, pd.Series]:
-    feature_cols = _feature_columns(train_df)
+    feature_cols = feature_columns(train_df)
     model = XGBClassifier(**_XGB_PARAMS)
     model.fit(train_df[feature_cols], train_df["label"])
 
