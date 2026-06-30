@@ -437,6 +437,7 @@ dependencies = [
     { name = "google-genai" },
     { name = "openai" },
     { name = "pandas" },
+    { name = "pandas-ta-classic" },
     { name = "python-dotenv" },
     { name = "requests" },
     { name = "streamlit" },
@@ -474,6 +475,7 @@ requires-dist = [
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.13.0" },
     { name = "openai", specifier = ">=2.44.0" },
     { name = "pandas", specifier = ">=2.2.0" },
+    { name = "pandas-ta-classic", specifier = ">=0.6.52" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3.0" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=6.0.0" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
@@ -1723,6 +1725,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/92/b9/f2dfa655e840cda5bc6ac5404695bf132e2fcafb2d7dfa5d1c8ea26b524a/pandas_gbq-0.35.0.tar.gz", hash = "sha256:596c908487ef0649a161e86ef272c00c267e581b95dc5ee0dc3518545b33bcfc", size = 79219, upload-time = "2026-04-10T00:41:19.354Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/06/3d/2f0e9c5cbc456d34f48215645d876f7885a15e09a72a07d1de3ddb181c38/pandas_gbq-0.35.0-py3-none-any.whl", hash = "sha256:258de481019566611031919997bf9c1ece4ca30a4dd02d3fc3664b251d446182", size = 50773, upload-time = "2026-04-10T00:40:59.337Z" },
+]
+
+[[package]]
+name = "pandas-ta-classic"
+version = "0.6.52"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "numpy", version = "2.5.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "pandas" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/96/88/439fb35fe42bf458623e21e4e7bc62408e4f0cd4cd9ac387806510db2e01/pandas_ta_classic-0.6.52-py3-none-any.whl", hash = "sha256:53956dde8969b8a1ac1cda7ee514c74b4af65d802387353814814ac2e1d949e2", size = 396905, upload-time = "2026-06-24T15:23:48.248Z" },
 ]
 
 [[package]]

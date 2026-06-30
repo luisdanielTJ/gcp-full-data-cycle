@@ -15,6 +15,7 @@ dependencies = [
     "openai>=2.44.0",
     "requests>=2.34.2",
     "duckdb>=1.1.0",
+    "pandas-ta-classic>=0.6.52",
 ]
 
 [project.optional-dependencies]
