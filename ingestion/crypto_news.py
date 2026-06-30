@@ -37,7 +37,9 @@ class CryptoNewsClient:
                 except Exception:
                     try:
                         ts = pd.Timestamp(pub_date)
-                        published = ts.tz_localize("UTC") if ts.tzinfo is None else ts.tz_convert("UTC")
+                        published = (
+                            ts.tz_localize("UTC") if ts.tzinfo is None else ts.tz_convert("UTC")
+                        )
                     except Exception:
                         continue
                 if published < cutoff:

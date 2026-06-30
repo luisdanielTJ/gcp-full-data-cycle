@@ -4,81 +4,82 @@ import pandas as pd
 
 from ingestion.reddit import RedditClient
 
-
-def _mock_json_response(posts: list[dict]) -> MagicMock:
-    response = MagicMock()
-    response.raise_for_status = MagicMock()
-    response.json.return_value = {"data": {"children": [{"data": p} for p in posts]}}
-    return response
+_ATOM_NS = "http://www.w3.org/2005/Atom"
+_BTC_URL = "https://www.reddit.com/r/Bitcoin/comments/abc/"
+_CC_URL = "https://www.reddit.com/r/CryptoCurrency/comments/abc/"
 
 
-def _make_post(title: str, score: int, created_utc: float, subreddit: str = "CryptoCurrency") -> dict:
-    return {
-        "title": title,
-        "score": score,
-        "created_utc": created_utc,
-        "url": f"https://reddit.com/r/{subreddit}/comments/abc",
-        "subreddit": subreddit,
-    }
+def _atom_xml(entries: list[dict]) -> bytes:
+    entries_xml = "".join(
+        f'<entry xmlns="{_ATOM_NS}">'
+        f"<title>{e['title']}</title>"
+        f'<link href="{e["url"]}" />'
+        f"<updated>{e['updated']}</updated>"
+        f"</entry>"
+        for e in entries
+    )
+    return (
+        f'<?xml version="1.0" encoding="UTF-8"?>'
+        f'<feed xmlns="{_ATOM_NS}">{entries_xml}</feed>'
+    ).encode()
 
 
-def _now_utc() -> float:
-    return pd.Timestamp.now(tz="UTC").timestamp()
+def _mock_response(entries: list[dict]) -> MagicMock:
+    resp = MagicMock()
+    resp.raise_for_status = MagicMock()
+    resp.content = _atom_xml(entries)
+    return resp
+
+
+def _hours_ago(h: float) -> str:
+    return (pd.Timestamp.now(tz="UTC") - pd.Timedelta(hours=h)).isoformat()
 
 
 def test_fetch_posts_returns_expected_schema():
     client = RedditClient()
-    posts = [_make_post("BTC moon", score=100, created_utc=_now_utc() - 3600)]
+    entries = [{"title": "BTC moon", "url": _BTC_URL, "updated": _hours_ago(1)}]
+    with patch("requests.get", return_value=_mock_response(entries)):
+        df = client.fetch_posts(subreddits=["Bitcoin"], hours=4)
 
-    with patch("requests.get", return_value=_mock_json_response(posts)):
-        df = client.fetch_posts(subreddits=["CryptoCurrency"], hours=4, min_upvotes=10)
-
-    expected_cols = {"subreddit", "title", "score", "url", "created_utc", "ingested_at"}
+    expected_cols = {"subreddit", "title", "url", "published_at", "ingested_at"}
     assert expected_cols.issubset(set(df.columns))
     assert len(df) == 1
-
-
-def test_fetch_posts_filters_low_score():
-    client = RedditClient()
-    recent_ts = _now_utc() - 3600
-    posts = [
-        _make_post("High score post", score=50, created_utc=recent_ts),
-        _make_post("Low score post", score=5, created_utc=recent_ts),
-    ]
-
-    with patch("requests.get", return_value=_mock_json_response(posts)):
-        df = client.fetch_posts(subreddits=["CryptoCurrency"], hours=4, min_upvotes=10)
-
-    assert len(df) == 1
-    assert df["title"].iloc[0] == "High score post"
+    assert df["subreddit"].iloc[0] == "Bitcoin"
 
 
 def test_fetch_posts_filters_old_posts():
     client = RedditClient()
-    posts = [
-        _make_post("Old post", score=100, created_utc=_now_utc() - 6 * 3600),
-        _make_post("Recent post", score=100, created_utc=_now_utc() - 3600),
+    entries = [
+        {"title": "Old post", "url": _BTC_URL, "updated": _hours_ago(6)},
+        {"title": "Recent post", "url": _BTC_URL, "updated": _hours_ago(1)},
     ]
-
-    with patch("requests.get", return_value=_mock_json_response(posts)):
-        df = client.fetch_posts(subreddits=["CryptoCurrency"], hours=4, min_upvotes=10)
+    with patch("requests.get", return_value=_mock_response(entries)):
+        df = client.fetch_posts(subreddits=["Bitcoin"], hours=4)
 
     assert len(df) == 1
     assert df["title"].iloc[0] == "Recent post"
 
 
-def test_fetch_posts_queries_all_subreddits():
+def test_fetch_posts_makes_single_combined_request():
     client = RedditClient()
-    recent_ts = _now_utc() - 1800
+    entries = [
+        {"title": "Post 1", "url": _BTC_URL, "updated": _hours_ago(1)},
+        {"title": "Post 2", "url": _CC_URL, "updated": _hours_ago(1)},
+    ]
+    with patch("requests.get", return_value=_mock_response(entries)) as mock_get:
+        df = client.fetch_posts(subreddits=["Bitcoin", "CryptoCurrency"], hours=4)
 
-    def get_side_effect(url, params, headers, timeout):
-        sub = url.split("/r/")[1].split("/")[0]
-        return _mock_json_response(
-            [_make_post(f"Post from {sub}", score=50, created_utc=recent_ts, subreddit=sub)]
-        )
-
-    with patch("requests.get", side_effect=get_side_effect):
-        df = client.fetch_posts(subreddits=["CryptoCurrency", "Bitcoin"], hours=4, min_upvotes=10)
-
+    assert mock_get.call_count == 1
+    called_url = mock_get.call_args[0][0]
+    assert "Bitcoin+CryptoCurrency" in called_url
     assert len(df) == 2
-    assert set(df["subreddit"].tolist()) == {"CryptoCurrency", "Bitcoin"}
+
+
+def test_fetch_posts_parses_timestamps_as_utc():
+    client = RedditClient()
+    entries = [{"title": "Post", "url": _BTC_URL, "updated": _hours_ago(1)}]
+    with patch("requests.get", return_value=_mock_response(entries)):
+        df = client.fetch_posts(subreddits=["Bitcoin"], hours=4)
+
+    assert df["published_at"].iloc[0].tzinfo is not None
+    assert df["ingested_at"].iloc[0].tzinfo is not None

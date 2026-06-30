@@ -2,8 +2,6 @@ import time
 from email.utils import formatdate
 from unittest.mock import MagicMock, patch
 
-import pandas as pd
-
 from ingestion.crypto_news import CryptoNewsClient
 
 
@@ -35,7 +33,8 @@ def _pub_date(seconds_ago: float) -> str:
 
 def test_fetch_news_returns_expected_schema():
     client = CryptoNewsClient(feeds={"coindesk": "http://fake/rss"})
-    items = [{"title": "BTC hits ATH", "url": "https://coindesk.com/1", "pub_date": _pub_date(3600)}]
+    items = [{"title": "BTC hits ATH", "url": "https://coindesk.com/1",
+               "pub_date": _pub_date(3600)}]
 
     with patch("requests.get", return_value=_mock_response(items)):
         df = client.fetch_news(hours=4)
