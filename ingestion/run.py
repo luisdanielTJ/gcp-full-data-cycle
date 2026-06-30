@@ -1,10 +1,5 @@
 from adapters import get_warehouse
-from adapters.config import (
-    CRYPTOPANIC_API_KEY,
-    REDDIT_CLIENT_ID,
-    REDDIT_CLIENT_SECRET,
-    REDDIT_USER_AGENT,
-)
+from adapters.config import CRYPTOPANIC_API_KEY, REDDIT_USER_AGENT
 from ingestion.binance import BinanceClient
 from ingestion.cryptopanic import CryptoPanicClient
 from ingestion.reddit import RedditClient
@@ -23,11 +18,7 @@ def ingest_binance(warehouse) -> None:
 
 
 def ingest_reddit(warehouse) -> None:
-    client = RedditClient(
-        client_id=REDDIT_CLIENT_ID,
-        client_secret=REDDIT_CLIENT_SECRET,
-        user_agent=REDDIT_USER_AGENT,
-    )
+    client = RedditClient(user_agent=REDDIT_USER_AGENT)
     df = client.fetch_posts(SUBREDDITS)
     warehouse.write_table(df, "bronze", "reddit_posts", mode="append")
     print(f"[reddit] wrote {len(df)} row(s)")

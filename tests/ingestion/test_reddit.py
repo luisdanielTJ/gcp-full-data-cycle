@@ -1,19 +1,25 @@
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
-import pytest
 
 from ingestion.reddit import RedditClient
 
 
-def _make_submission(title: str, score: int, created_utc: float, url: str = "https://reddit.com/r/test") -> MagicMock:
-    sub = MagicMock()
-    sub.title = title
-    sub.score = score
-    sub.created_utc = created_utc
-    sub.url = url
-    sub.subreddit.display_name = "CryptoCurrency"
-    return sub
+def _mock_json_response(posts: list[dict]) -> MagicMock:
+    response = MagicMock()
+    response.raise_for_status = MagicMock()
+    response.json.return_value = {"data": {"children": [{"data": p} for p in posts]}}
+    return response
+
+
+def _make_post(title: str, score: int, created_utc: float, subreddit: str = "CryptoCurrency") -> dict:
+    return {
+        "title": title,
+        "score": score,
+        "created_utc": created_utc,
+        "url": f"https://reddit.com/r/{subreddit}/comments/abc",
+        "subreddit": subreddit,
+    }
 
 
 def _now_utc() -> float:
@@ -21,13 +27,10 @@ def _now_utc() -> float:
 
 
 def test_fetch_posts_returns_expected_schema():
-    client = RedditClient(client_id="id", client_secret="secret", user_agent="test/0.1")
-    recent_ts = _now_utc() - 3600  # 1 hour ago
-    submissions = [_make_submission("BTC moon", score=100, created_utc=recent_ts)]
+    client = RedditClient()
+    posts = [_make_post("BTC moon", score=100, created_utc=_now_utc() - 3600)]
 
-    with patch("praw.Reddit") as mock_reddit_cls:
-        mock_reddit = mock_reddit_cls.return_value
-        mock_reddit.subreddit.return_value.new.return_value = iter(submissions)
+    with patch("requests.get", return_value=_mock_json_response(posts)):
         df = client.fetch_posts(subreddits=["CryptoCurrency"], hours=4, min_upvotes=10)
 
     expected_cols = {"subreddit", "title", "score", "url", "created_utc", "ingested_at"}
@@ -36,16 +39,14 @@ def test_fetch_posts_returns_expected_schema():
 
 
 def test_fetch_posts_filters_low_score():
-    client = RedditClient(client_id="id", client_secret="secret", user_agent="test/0.1")
+    client = RedditClient()
     recent_ts = _now_utc() - 3600
-    submissions = [
-        _make_submission("High score post", score=50, created_utc=recent_ts),
-        _make_submission("Low score post", score=5, created_utc=recent_ts),
+    posts = [
+        _make_post("High score post", score=50, created_utc=recent_ts),
+        _make_post("Low score post", score=5, created_utc=recent_ts),
     ]
 
-    with patch("praw.Reddit") as mock_reddit_cls:
-        mock_reddit = mock_reddit_cls.return_value
-        mock_reddit.subreddit.return_value.new.return_value = iter(submissions)
+    with patch("requests.get", return_value=_mock_json_response(posts)):
         df = client.fetch_posts(subreddits=["CryptoCurrency"], hours=4, min_upvotes=10)
 
     assert len(df) == 1
@@ -53,17 +54,13 @@ def test_fetch_posts_filters_low_score():
 
 
 def test_fetch_posts_filters_old_posts():
-    client = RedditClient(client_id="id", client_secret="secret", user_agent="test/0.1")
-    old_ts = _now_utc() - 6 * 3600  # 6 hours ago — outside 4h window
-    recent_ts = _now_utc() - 3600   # 1 hour ago
-    submissions = [
-        _make_submission("Old post", score=100, created_utc=old_ts),
-        _make_submission("Recent post", score=100, created_utc=recent_ts),
+    client = RedditClient()
+    posts = [
+        _make_post("Old post", score=100, created_utc=_now_utc() - 6 * 3600),
+        _make_post("Recent post", score=100, created_utc=_now_utc() - 3600),
     ]
 
-    with patch("praw.Reddit") as mock_reddit_cls:
-        mock_reddit = mock_reddit_cls.return_value
-        mock_reddit.subreddit.return_value.new.return_value = iter(submissions)
+    with patch("requests.get", return_value=_mock_json_response(posts)):
         df = client.fetch_posts(subreddits=["CryptoCurrency"], hours=4, min_upvotes=10)
 
     assert len(df) == 1
@@ -71,25 +68,17 @@ def test_fetch_posts_filters_old_posts():
 
 
 def test_fetch_posts_queries_all_subreddits():
-    client = RedditClient(client_id="id", client_secret="secret", user_agent="test/0.1")
+    client = RedditClient()
     recent_ts = _now_utc() - 1800
 
-    def subreddit_side_effect(name: str):
-        sub_mock = MagicMock()
-        s = MagicMock()
-        s.title = f"Post from {name}"
-        s.score = 50
-        s.created_utc = recent_ts
-        s.url = f"https://reddit.com/r/{name}/post"
-        s.subreddit.display_name = name
-        sub_mock.new.return_value = iter([s])
-        return sub_mock
+    def get_side_effect(url, params, headers, timeout):
+        sub = url.split("/r/")[1].split("/")[0]
+        return _mock_json_response(
+            [_make_post(f"Post from {sub}", score=50, created_utc=recent_ts, subreddit=sub)]
+        )
 
-    with patch("praw.Reddit") as mock_reddit_cls:
-        mock_reddit = mock_reddit_cls.return_value
-        mock_reddit.subreddit.side_effect = subreddit_side_effect
+    with patch("requests.get", side_effect=get_side_effect):
         df = client.fetch_posts(subreddits=["CryptoCurrency", "Bitcoin"], hours=4, min_upvotes=10)
 
     assert len(df) == 2
-    subreddits_found = set(df["subreddit"].tolist())
-    assert subreddits_found == {"CryptoCurrency", "Bitcoin"}
+    assert set(df["subreddit"].tolist()) == {"CryptoCurrency", "Bitcoin"}

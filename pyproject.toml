@@ -13,7 +13,6 @@ dependencies = [
     "uvicorn>=0.32.0",
     "streamlit>=1.40.0",
     "openai>=2.44.0",
-    "praw>=8.0.2",
     "requests>=2.34.2",
     "duckdb>=1.1.0",
 ]

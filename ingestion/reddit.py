@@ -2,24 +2,10 @@ import pandas as pd
 
 
 class RedditClient:
-    _FETCH_LIMIT = 100
+    _BASE_URL = "https://www.reddit.com/r/{subreddit}/new.json"
 
-    def __init__(self, client_id: str, client_secret: str, user_agent: str) -> None:
-        self._client_id = client_id
-        self._client_secret = client_secret
+    def __init__(self, user_agent: str = "crypto-edge-ingestion/0.1") -> None:
         self._user_agent = user_agent
-        self._reddit = None
-
-    def _get_reddit(self):
-        if self._reddit is None:
-            import praw
-
-            self._reddit = praw.Reddit(
-                client_id=self._client_id,
-                client_secret=self._client_secret,
-                user_agent=self._user_agent,
-            )
-        return self._reddit
 
     def fetch_posts(
         self,
@@ -27,22 +13,29 @@ class RedditClient:
         hours: int = 4,
         min_upvotes: int = 10,
     ) -> pd.DataFrame:
-        cutoff = pd.Timestamp.now(tz="UTC") - pd.Timedelta(hours=hours)
-        cutoff_ts = cutoff.timestamp()
+        import requests
+
+        cutoff_ts = (pd.Timestamp.now(tz="UTC") - pd.Timedelta(hours=hours)).timestamp()
         rows = []
         for name in subreddits:
-            for post in self._get_reddit().subreddit(name).new(limit=self._FETCH_LIMIT):
-                if post.created_utc < cutoff_ts:
-                    continue
-                if post.score < min_upvotes:
+            response = requests.get(
+                self._BASE_URL.format(subreddit=name),
+                params={"limit": 100},
+                headers={"User-Agent": self._user_agent},
+                timeout=10,
+            )
+            response.raise_for_status()
+            for post in response.json()["data"]["children"]:
+                d = post["data"]
+                if d["created_utc"] < cutoff_ts or d["score"] < min_upvotes:
                     continue
                 rows.append(
                     {
-                        "subreddit": post.subreddit.display_name,
-                        "title": post.title,
-                        "score": post.score,
-                        "url": post.url,
-                        "created_utc": pd.Timestamp(post.created_utc, unit="s", tz="UTC"),
+                        "subreddit": d["subreddit"],
+                        "title": d["title"],
+                        "score": d["score"],
+                        "url": d["url"],
+                        "created_utc": pd.Timestamp(d["created_utc"], unit="s", tz="UTC"),
                         "ingested_at": pd.Timestamp.now(tz="UTC"),
                     }
                 )
