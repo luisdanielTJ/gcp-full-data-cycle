@@ -2,16 +2,16 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import f1_score, precision_score, recall_score, roc_auc_score
 
-_BUY_THRESHOLD = 0.65
-_SELL_THRESHOLD = 0.35
+BUY_THRESHOLD = 0.65
+SELL_THRESHOLD = 0.35
 _PERIODS_PER_YEAR = 2190  # 6 four-hour candles/day * 365 days
 _MIN_SIGNAL_ACCURACY = 0.55
 
 
-def _derive_signals(proba: np.ndarray) -> pd.Series:
+def derive_signals(proba: np.ndarray) -> pd.Series:
     signals = pd.Series("HOLD", index=range(len(proba)))
-    signals[proba > _BUY_THRESHOLD] = "BUY"
-    signals[proba < _SELL_THRESHOLD] = "SELL"
+    signals[proba > BUY_THRESHOLD] = "BUY"
+    signals[proba < SELL_THRESHOLD] = "SELL"
     return signals
 
 
@@ -31,7 +31,7 @@ def evaluate_model(model, X_test: pd.DataFrame, y_test: pd.Series, test_df: pd.D
     f1 = float(f1_score(y_test, y_pred, zero_division=0))
     auc_roc = float(roc_auc_score(y_test, proba)) if y_test.nunique() > 1 else float("nan")
 
-    signals = _derive_signals(proba).reset_index(drop=True)
+    signals = derive_signals(proba).reset_index(drop=True)
     return_pct = test_df["return_pct"].reset_index(drop=True)
     label = pd.Series(y_test).reset_index(drop=True)
 

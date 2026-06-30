@@ -74,3 +74,12 @@ def test_evaluate_model_gate_fails_when_no_buy_signals():
 
     assert result["signal_accuracy"] is None
     assert result["gate_passed"] is False
+
+
+def test_derive_signals_applies_buy_sell_hold_thresholds():
+    from ml.evaluate import derive_signals
+
+    proba = np.array([0.9, 0.5, 0.1, 0.65, 0.35])
+    signals = derive_signals(proba)
+
+    assert list(signals) == ["BUY", "HOLD", "SELL", "HOLD", "HOLD"]
