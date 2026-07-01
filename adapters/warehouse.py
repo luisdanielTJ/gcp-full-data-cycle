@@ -51,40 +51,6 @@ class DuckDBWarehouse(WarehouseAdapter):
         return self.conn.execute(f"SELECT * FROM {table_name}").df()
 
 
-class BigQueryWarehouse(WarehouseAdapter):
-    def __init__(self, project_id: str):
-        from google.cloud import bigquery
-        self.client = bigquery.Client(project=project_id)
-        self.project_id = project_id
-
-    def run_query(self, sql: str) -> pd.DataFrame:
-        return self.client.query(sql).to_dataframe()
-
-    def write_table(
-        self, df: pd.DataFrame, dataset: str, table: str, mode: str = "append"
-    ) -> None:
-        if mode not in ("append", "replace"):
-            raise ValueError(f"mode must be 'append' or 'replace', got {mode!r}")
-        from google.cloud import bigquery
-        disposition = (
-            bigquery.WriteDisposition.WRITE_APPEND
-            if mode == "append"
-            else bigquery.WriteDisposition.WRITE_TRUNCATE
-        )
-        job_config = bigquery.LoadJobConfig(write_disposition=disposition)
-        table_ref = f"{self.project_id}.{dataset}.{table}"
-        self.client.load_table_from_dataframe(df, table_ref, job_config=job_config).result()
-
-    def read_table(self, dataset: str, table: str) -> pd.DataFrame:
-        from google.api_core.exceptions import NotFound
-
-        table_ref = f"{self.project_id}.{dataset}.{table}"
-        try:
-            return self.client.query(f"SELECT * FROM `{table_ref}`").to_dataframe()
-        except NotFound:
-            return pd.DataFrame()
-
-
 class SupabaseWarehouseAdapter(WarehouseAdapter):
     def __init__(self, database_url: str):
         from sqlalchemy import create_engine, text
