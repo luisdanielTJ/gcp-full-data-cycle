@@ -75,3 +75,11 @@ def test_read_table_returns_empty_when_table_missing(warehouse):
     with patch("pandas.read_sql", side_effect=ProgrammingError("table not found", None, None)):
         result = wh.read_table("silver", "does_not_exist")
     assert result.empty
+
+
+def test_read_table_returns_empty_on_pandas_database_error(warehouse):
+    from pandas.errors import DatabaseError
+    wh, _ = warehouse
+    with patch("pandas.read_sql", side_effect=DatabaseError("table not found")):
+        result = wh.read_table("silver", "does_not_exist")
+    assert result.empty

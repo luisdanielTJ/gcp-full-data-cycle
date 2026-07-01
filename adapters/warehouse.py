@@ -71,8 +71,9 @@ class SupabaseWarehouseAdapter(WarehouseAdapter):
         df.to_sql(table, self._engine, schema=dataset, if_exists=if_exists, index=False)
 
     def read_table(self, dataset: str, table: str) -> pd.DataFrame:
+        from pandas.errors import DatabaseError
         from sqlalchemy.exc import ProgrammingError
         try:
             return pd.read_sql(f"SELECT * FROM {dataset}.{table}", self._engine)
-        except ProgrammingError:
+        except (ProgrammingError, DatabaseError):
             return pd.DataFrame()
