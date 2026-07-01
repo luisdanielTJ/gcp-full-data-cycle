@@ -1,0 +1,18 @@
+name: Train (ML Model)
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --frozen --no-dev --extra ml
+      - run: uv run python train.py
+        env:
+          WAREHOUSE_MODE: ${{ secrets.WAREHOUSE_MODE }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}

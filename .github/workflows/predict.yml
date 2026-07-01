@@ -1,0 +1,20 @@
+name: Predict (Gold + Signals)
+
+on:
+  schedule:
+    - cron: "15 */4 * * *"
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --frozen --no-dev --extra ml
+      - run: uv run python predict.py
+        env:
+          WAREHOUSE_MODE: ${{ secrets.WAREHOUSE_MODE }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          LLM_MODE: openai
