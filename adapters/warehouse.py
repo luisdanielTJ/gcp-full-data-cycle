@@ -83,3 +83,30 @@ class BigQueryWarehouse(WarehouseAdapter):
             return self.client.query(f"SELECT * FROM `{table_ref}`").to_dataframe()
         except NotFound:
             return pd.DataFrame()
+
+
+class SupabaseWarehouseAdapter(WarehouseAdapter):
+    def __init__(self, database_url: str):
+        from sqlalchemy import create_engine, text
+        self._engine = create_engine(database_url)
+        self._text = text
+
+    def run_query(self, sql: str) -> pd.DataFrame:
+        return pd.read_sql(sql, self._engine)
+
+    def write_table(
+        self, df: pd.DataFrame, dataset: str, table: str, mode: str = "append"
+    ) -> None:
+        if mode not in ("append", "replace"):
+            raise ValueError(f"mode must be 'append' or 'replace', got {mode!r}")
+        with self._engine.begin() as conn:
+            conn.execute(self._text(f"CREATE SCHEMA IF NOT EXISTS {dataset}"))
+        if_exists = "replace" if mode == "replace" else "append"
+        df.to_sql(table, self._engine, schema=dataset, if_exists=if_exists, index=False)
+
+    def read_table(self, dataset: str, table: str) -> pd.DataFrame:
+        from sqlalchemy.exc import ProgrammingError
+        try:
+            return pd.read_sql(f"SELECT * FROM {dataset}.{table}", self._engine)
+        except ProgrammingError:
+            return pd.DataFrame()
