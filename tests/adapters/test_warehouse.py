@@ -70,3 +70,17 @@ def test_read_table_returns_written_data(warehouse):
 def test_read_table_returns_empty_when_table_missing(warehouse):
     result = warehouse.read_table("silver", "does_not_exist")
     assert result.empty
+
+
+def test_get_warehouse_returns_supabase_adapter():
+    from unittest.mock import MagicMock, patch
+
+    from adapters import get_warehouse
+    from adapters.warehouse import SupabaseWarehouseAdapter
+
+    with patch("adapters.WAREHOUSE_MODE", "supabase"):
+        with patch("adapters.DATABASE_URL", "postgresql://fake/db"):
+            with patch("sqlalchemy.create_engine", return_value=MagicMock()):
+                result = get_warehouse()
+
+    assert isinstance(result, SupabaseWarehouseAdapter)

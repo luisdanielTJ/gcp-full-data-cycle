@@ -1,4 +1,5 @@
 from adapters.config import (
+    DATABASE_URL,
     DUCKDB_PATH,
     GCP_PROJECT_ID,
     GEMINI_API_KEY,
@@ -8,10 +9,17 @@ from adapters.config import (
 )
 from adapters.llm import GeminiAdapter, LLMAdapter, OpenAIAdapter
 from adapters.model_registry import ModelRegistryAdapter, WarehouseModelRegistry
-from adapters.warehouse import BigQueryWarehouse, DuckDBWarehouse, WarehouseAdapter
+from adapters.warehouse import (
+    BigQueryWarehouse,
+    DuckDBWarehouse,
+    SupabaseWarehouseAdapter,
+    WarehouseAdapter,
+)
 
 
 def get_warehouse() -> WarehouseAdapter:
+    if WAREHOUSE_MODE == "supabase":
+        return SupabaseWarehouseAdapter(database_url=DATABASE_URL)
     if WAREHOUSE_MODE == "bigquery":
         return BigQueryWarehouse(project_id=GCP_PROJECT_ID)
     return DuckDBWarehouse(db_path=DUCKDB_PATH)
