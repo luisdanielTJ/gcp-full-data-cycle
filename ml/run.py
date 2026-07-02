@@ -20,7 +20,11 @@ def run_training_cycle(warehouse, model_registry) -> None:
         return
 
     train_df, test_df = time_based_split(dataset)
-    model, X_test, y_test = train_model(train_df, test_df)
+    neg = (train_df["label"] == 0).sum()
+    pos = (train_df["label"] == 1).sum()
+    scale_pos_weight = float(neg / pos) if pos > 0 else 1.0
+    print(f"[train] class balance: {pos} positive, {neg} negative, scale_pos_weight={scale_pos_weight:.2f}")
+    model, X_test, y_test = train_model(train_df, test_df, scale_pos_weight=scale_pos_weight)
     metrics = evaluate_model(model, X_test, y_test, test_df)
     metrics["feature_importance"] = compute_feature_importance(model, X_test)
 

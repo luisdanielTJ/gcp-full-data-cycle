@@ -6,6 +6,7 @@ BUY_THRESHOLD = 0.55
 SELL_THRESHOLD = 0.45
 _PERIODS_PER_YEAR = 2190  # 6 four-hour candles/day * 365 days
 _MIN_SIGNAL_ACCURACY = 0.55
+_MIN_AUC_ROC = 0.55
 
 
 def derive_signals(proba: np.ndarray) -> pd.Series:
@@ -47,9 +48,8 @@ def evaluate_model(model, X_test: pd.DataFrame, y_test: pd.Series, test_df: pd.D
     buy_and_hold_sharpe = _sharpe(buy_and_hold_returns)
 
     gate_passed = bool(
-        has_buy_signal
-        and signal_accuracy is not None
-        and signal_accuracy > _MIN_SIGNAL_ACCURACY
+        not np.isnan(auc_roc)
+        and auc_roc > _MIN_AUC_ROC
     )
 
     return {

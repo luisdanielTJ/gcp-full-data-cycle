@@ -25,7 +25,7 @@ def test_run_training_cycle_logs_and_promotes_when_gate_passes():
     mock_registry.log_model.return_value = "1"
     mock_warehouse.read_table.side_effect = [pd.DataFrame(), pd.DataFrame()]
 
-    dataset = pd.DataFrame({"a": range(60)})
+    dataset = pd.DataFrame({"a": range(60), "label": [1, 0] * 30})
     train_df, test_df = dataset.iloc[:48], dataset.iloc[48:]
     fake_model = MagicMock()
     fake_model.get_params.return_value = {"n_estimators": 100}
@@ -55,7 +55,7 @@ def test_run_training_cycle_logs_without_promoting_when_gate_fails():
     mock_registry.log_model.return_value = "1"
     mock_warehouse.read_table.side_effect = [pd.DataFrame(), pd.DataFrame()]
 
-    dataset = pd.DataFrame({"a": range(60)})
+    dataset = pd.DataFrame({"a": range(60), "label": [1, 0] * 30})
     train_df, test_df = dataset.iloc[:48], dataset.iloc[48:]
     fake_model = MagicMock()
     fake_model.get_params.return_value = {}

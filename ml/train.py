@@ -22,10 +22,10 @@ def feature_columns(df: pd.DataFrame) -> list[str]:
 
 
 def train_model(
-    train_df: pd.DataFrame, test_df: pd.DataFrame
+    train_df: pd.DataFrame, test_df: pd.DataFrame, scale_pos_weight: float = 1.0
 ) -> tuple[XGBClassifier, pd.DataFrame, pd.Series]:
     feature_cols = feature_columns(train_df)
-    model = XGBClassifier(**_XGB_PARAMS)
+    model = XGBClassifier(**_XGB_PARAMS, scale_pos_weight=scale_pos_weight)
     model.fit(train_df[feature_cols], train_df["label"])
 
     X_test = test_df[feature_cols]
