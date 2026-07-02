@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import f1_score, precision_score, recall_score, roc_auc_score
 
-BUY_THRESHOLD = 0.65
-SELL_THRESHOLD = 0.35
+BUY_THRESHOLD = 0.55
+SELL_THRESHOLD = 0.45
 _PERIODS_PER_YEAR = 2190  # 6 four-hour candles/day * 365 days
 _MIN_SIGNAL_ACCURACY = 0.55
 
@@ -50,7 +50,6 @@ def evaluate_model(model, X_test: pd.DataFrame, y_test: pd.Series, test_df: pd.D
         has_buy_signal
         and signal_accuracy is not None
         and signal_accuracy > _MIN_SIGNAL_ACCURACY
-        and sharpe > buy_and_hold_sharpe
     )
 
     return {

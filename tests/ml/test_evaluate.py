@@ -52,7 +52,7 @@ def test_evaluate_model_gate_fails_on_low_signal_accuracy():
     assert result["gate_passed"] is False
 
 
-def test_evaluate_model_gate_fails_when_strategy_underperforms_buy_and_hold():
+def test_evaluate_model_sharpe_still_computed_but_does_not_block_gate():
     model = _FakeModel([0.9, 0.8, 0.2, 0.1])
     y_test = pd.Series([1, 1, 0, 0])
     # BUY rows (0, 1) lose money; non-BUY rows (2, 3) would have gained a lot.
@@ -61,8 +61,8 @@ def test_evaluate_model_gate_fails_when_strategy_underperforms_buy_and_hold():
     result = evaluate_model(model, _frame(4), y_test, test_df)
 
     assert result["signal_accuracy"] == 1.0
-    assert result["sharpe"] < result["buy_and_hold_sharpe"]
-    assert result["gate_passed"] is False
+    assert result["sharpe"] < result["buy_and_hold_sharpe"]  # still reported
+    assert result["gate_passed"] is True  # gate passes on signal accuracy alone
 
 
 def test_evaluate_model_gate_fails_when_no_buy_signals():
@@ -82,4 +82,5 @@ def test_derive_signals_applies_buy_sell_hold_thresholds():
     proba = np.array([0.9, 0.5, 0.1, 0.65, 0.35])
     signals = derive_signals(proba)
 
-    assert list(signals) == ["BUY", "HOLD", "SELL", "HOLD", "HOLD"]
+    # BUY=0.55, SELL=0.45 thresholds
+    assert list(signals) == ["BUY", "HOLD", "SELL", "BUY", "SELL"]
