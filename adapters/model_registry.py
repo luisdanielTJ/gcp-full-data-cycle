@@ -1,3 +1,4 @@
+import base64
 import json
 import pickle
 from abc import ABC, abstractmethod
@@ -71,7 +72,7 @@ class WarehouseModelRegistry(ModelRegistryAdapter):
         row = pd.DataFrame([{
             "name": name,
             "version": version,
-            "model_bytes": pickle.dumps(model),
+            "model_bytes": base64.b64encode(pickle.dumps(model)).decode("utf-8"),
             "metrics_json": json.dumps(metrics),
             "params_json": json.dumps(params),
             "created_at": pd.Timestamp.now(tz="UTC"),
@@ -90,7 +91,7 @@ class WarehouseModelRegistry(ModelRegistryAdapter):
 
         registry_df = self.warehouse.read_table("models", "registry")
         match = registry_df[(registry_df["name"] == name) & (registry_df["version"] == version)]
-        return pickle.loads(match.iloc[0]["model_bytes"])
+        return pickle.loads(base64.b64decode(match.iloc[0]["model_bytes"]))
 
     def promote_model(self, name: str, version: str) -> None:
         row = pd.DataFrame([{
