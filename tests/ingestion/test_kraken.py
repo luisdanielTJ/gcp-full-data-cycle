@@ -55,3 +55,23 @@ def test_fetch_ohlcv_timestamps_are_utc():
         df = client.fetch_ohlcv("XBTUSD")
     assert df["open_time"].iloc[0].tzinfo is not None
     assert df["ingested_at"].iloc[0].tzinfo is not None
+
+
+def test_fetch_ohlcv_returns_all_candles():
+    response = MagicMock()
+    response.raise_for_status = MagicMock()
+    response.json.return_value = {
+        "error": [],
+        "result": {
+            "XXBTZUSD": [
+                [1718870400, "50000.00", "50500.00", "49800.00", "50250.00", "50100.00", "100.0", 50],
+                [1718884800, "50250.00", "51000.00", "50100.00", "50900.00", "50500.00", "150.0", 75],
+            ],
+            "last": 1718884800,
+        },
+    }
+    client = KrakenClient()
+    with patch("requests.get", return_value=response):
+        df = client.fetch_ohlcv("XBTUSD")
+    assert len(df) == 2
+    assert df["open_time"].iloc[0] < df["open_time"].iloc[1]

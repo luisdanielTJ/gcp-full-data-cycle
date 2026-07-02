@@ -19,18 +19,17 @@ class KrakenClient:
             raise ValueError(f"Kraken API error: {body['error']}")
         result = body["result"]
         candles = next(v for k, v in result.items() if k != "last")
-        c = candles[-1]
-        return pd.DataFrame(
-            [
-                {
-                    "asset": pair,
-                    "open_time": pd.Timestamp(c[0], unit="s", tz="UTC"),
-                    "open": float(c[1]),
-                    "high": float(c[2]),
-                    "low": float(c[3]),
-                    "close": float(c[4]),
-                    "volume": float(c[6]),
-                    "ingested_at": pd.Timestamp.now(tz="UTC"),
-                }
-            ]
-        )
+        now = pd.Timestamp.now(tz="UTC")
+        return pd.DataFrame([
+            {
+                "asset": pair,
+                "open_time": pd.Timestamp(c[0], unit="s", tz="UTC"),
+                "open": float(c[1]),
+                "high": float(c[2]),
+                "low": float(c[3]),
+                "close": float(c[4]),
+                "volume": float(c[6]),
+                "ingested_at": now,
+            }
+            for c in candles
+        ])
