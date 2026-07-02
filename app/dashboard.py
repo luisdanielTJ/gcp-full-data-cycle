@@ -75,19 +75,19 @@ def _styled_chart(ohlcv_df: pd.DataFrame, asset: str, signals_df: pd.DataFrame) 
                     ))
     fig.update_layout(
         paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(14,17,23,0.5)",
+        plot_bgcolor="#eaf4fb",
         xaxis_rangeslider_visible=False,
         margin=dict(l=0, r=0, t=8, b=0),
         height=320,
         xaxis=dict(
-            gridcolor="rgba(128,128,128,0.15)",
+            gridcolor="rgba(180,210,230,0.6)",
             showline=True,
-            linecolor="rgba(128,128,128,0.3)",
+            linecolor="rgba(100,160,200,0.5)",
         ),
         yaxis=dict(
-            gridcolor="rgba(128,128,128,0.15)",
+            gridcolor="rgba(180,210,230,0.6)",
             showline=True,
-            linecolor="rgba(128,128,128,0.3)",
+            linecolor="rgba(100,160,200,0.5)",
         ),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
     )
@@ -180,11 +180,11 @@ with tab_analysis:
                 ))
                 fig.update_layout(
                     paper_bgcolor="rgba(0,0,0,0)",
-                    plot_bgcolor="rgba(14,17,23,0.5)",
+                    plot_bgcolor="#eaf4fb",
                     margin=dict(l=0, r=0, t=8, b=0),
                     height=240,
-                    xaxis=dict(gridcolor="rgba(128,128,128,0.15)"),
-                    yaxis=dict(gridcolor="rgba(128,128,128,0.15)"),
+                    xaxis=dict(gridcolor="rgba(180,210,230,0.6)"),
+                    yaxis=dict(gridcolor="rgba(180,210,230,0.6)"),
                 )
                 st.plotly_chart(fig, use_container_width=True)
 
