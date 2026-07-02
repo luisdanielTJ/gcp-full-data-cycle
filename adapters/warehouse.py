@@ -54,7 +54,11 @@ class DuckDBWarehouse(WarehouseAdapter):
 class SupabaseWarehouseAdapter(WarehouseAdapter):
     def __init__(self, database_url: str):
         from sqlalchemy import create_engine, text
-        self._engine = create_engine(database_url)
+        self._engine = create_engine(
+            database_url,
+            connect_args={"connect_timeout": 10},
+            pool_pre_ping=True,
+        )
         self._text = text
 
     def run_query(self, sql: str) -> pd.DataFrame:

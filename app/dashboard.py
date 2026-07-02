@@ -15,7 +15,13 @@ st.set_page_config(page_title="crypto-edge", layout="centered")
 ASSETS = ["XBTUSD", "ETHUSD"]
 ASSET_LABELS = {"XBTUSD": "BTC", "ETHUSD": "ETH"}
 
-warehouse = get_warehouse()
+
+@st.cache_resource
+def _warehouse():
+    return get_warehouse()
+
+
+warehouse = _warehouse()
 
 
 def _ago(ts) -> str:
