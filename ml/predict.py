@@ -6,6 +6,7 @@ import shap
 
 from ml.evaluate import derive_signals
 from ml.train import feature_columns
+from paper_trading.trade import run_paper_trade_cycle
 
 MODEL_NAME = "xgboost_signal"
 _TOP_K_FEATURES = 5
@@ -94,3 +95,4 @@ def run_prediction_cycle(warehouse, model_registry, llm) -> None:
     warehouse.write_table(pd.DataFrame(signal_rows), "predictions", "signals", mode="append")
     warehouse.write_table(pd.DataFrame(narration_rows), "predictions", "narrations", mode="append")
     print(f"[predict] wrote {len(signal_rows)} signal(s) and narration(s)")
+    run_paper_trade_cycle(warehouse, pd.DataFrame(signal_rows), ohlcv_df)
