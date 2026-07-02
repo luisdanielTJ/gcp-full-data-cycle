@@ -1,0 +1,15 @@
+name: Keep Streamlit app alive
+
+on:
+  schedule:
+    - cron: "0 */12 * * *"  # every 12 hours
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Streamlit app
+        run: |
+          curl -s -o /dev/null -w "%{http_code}" \
+            https://gcp-full-data-cycle-qz9xweiwxzu8zgf9nweuex.streamlit.app/
