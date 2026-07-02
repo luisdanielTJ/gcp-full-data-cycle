@@ -234,3 +234,72 @@ if not journal_df.empty and "closed_at" in journal_df.columns:
         perf_cols[4].metric(
             "Signal accuracy", f"{sig_acc:.0%}" if sig_acc is not None else "N/A"
         )
+
+# ── Paper Trading ─────────────────────────────────────────────────────────────
+
+st.header("Paper Trading")
+paper_df = warehouse.read_table("paper_trades", "journal")
+
+closed_paper = paper_df[paper_df["closed_at"].notna()] if not paper_df.empty else pd.DataFrame()
+open_paper = paper_df[paper_df["closed_at"].isna()] if not paper_df.empty else pd.DataFrame()
+
+total_pnl = float(closed_paper["pnl_usd"].sum()) if not closed_paper.empty else 0.0
+win_rate = float((closed_paper["pnl_usd"] > 0).mean()) if not closed_paper.empty else None
+
+pt_cols = st.columns(4)
+pt_cols[0].metric("Total P&L", f"${total_pnl:+.2f}")
+pt_cols[1].metric("Win Rate", f"{win_rate:.0%}" if win_rate is not None else "N/A")
+pt_cols[2].metric("Open Positions", len(open_paper))
+pt_cols[3].metric("Total Trades", len(paper_df) if not paper_df.empty else 0)
+
+st.subheader("Open positions")
+if not open_paper.empty:
+    open_rows = []
+    for _, pos in open_paper.iterrows():
+        asset = pos["asset"]
+        entry = float(pos["entry_price"])
+        ohlcv_row = _latest_for_asset(ohlcv_df, asset, "open_time")
+        if ohlcv_row is None:
+            continue
+        current = float(ohlcv_row["close"])
+        upnl_pct = (current - entry) / entry
+        upnl_usd = upnl_pct * float(pos["position_size_usd"])
+        open_rows.append({
+            "Asset": ASSET_LABELS.get(asset, asset),
+            "Entry ($)": f"{entry:,.2f}",
+            "Current ($)": f"{current:,.2f}",
+            "Unrealized P&L ($)": f"{upnl_usd:+.2f}",
+            "Unrealized P&L (%)": f"{upnl_pct:+.1%}",
+            "Opened At": pos["opened_at"],
+        })
+    if open_rows:
+        st.dataframe(pd.DataFrame(open_rows))
+    else:
+        st.info("No price data for open positions")
+else:
+    st.info("No open positions")
+
+st.subheader("Closed trades")
+if not closed_paper.empty:
+    display = closed_paper[
+        ["asset", "entry_price", "exit_price", "pnl_usd", "pnl_pct", "opened_at", "closed_at"]
+    ].copy()
+    display["asset"] = display["asset"].map(ASSET_LABELS).fillna(display["asset"])
+    display["pnl_pct"] = display["pnl_pct"].apply(
+        lambda x: f"{x:+.1%}" if pd.notna(x) else ""
+    )
+    display["pnl_usd"] = display["pnl_usd"].apply(
+        lambda x: f"${x:+.2f}" if pd.notna(x) else ""
+    )
+    display = display.rename(columns={
+        "asset": "Asset",
+        "entry_price": "Entry ($)",
+        "exit_price": "Exit ($)",
+        "pnl_usd": "P&L ($)",
+        "pnl_pct": "P&L (%)",
+        "opened_at": "Opened At",
+        "closed_at": "Closed At",
+    })
+    st.dataframe(display.sort_values("Closed At", ascending=False))
+else:
+    st.info("No closed trades yet")
